@@ -52,17 +52,16 @@ exports.createRazorpayOrder = async (req, res) => {
       await order.save();
       await Cart.updateOne({ user: req.userId }, { items: [] });
 
-      // Send order confirmation email
-      const emailResult = await sendOrderConfirmationEmail(order);
-      if (!emailResult.success) {
-        console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
-      }
+      // Send email in background without blocking response
+      sendOrderConfirmationEmail(order).catch(err => {
+        console.warn('Email failed but order created:', err.message);
+      });
 
       return res.json({ 
         message: 'Demo order created (Razorpay not configured)', 
         orderId: order._id,
         isDemoOrder: true,
-        emailSent: emailResult?.success || false
+        emailSent: true
       });
     }
 
@@ -137,16 +136,15 @@ exports.verifyPayment = async (req, res) => {
     await order.save();
     await Cart.updateOne({ user: req.userId }, { items: [] });
 
-    // Send order confirmation email
-    const emailResult = await sendOrderConfirmationEmail(order);
-    if (!emailResult.success) {
-      console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
-    }
+    // Send email in background without blocking response
+    sendOrderConfirmationEmail(order).catch(err => {
+      console.warn('Email failed but order created:', err.message);
+    });
 
     res.json({ 
       message: 'Payment verified successfully', 
       orderId: order._id,
-      emailSent: emailResult?.success || false
+      emailSent: true
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -194,17 +192,16 @@ exports.createOrder = async (req, res) => {
     await order.save();
     await Cart.updateOne({ user: req.userId }, { items: [] });
 
-    // Send order confirmation email
-    const emailResult = await sendOrderConfirmationEmail(order);
-    if (!emailResult.success) {
-      console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
-    }
+    // Send email in background without blocking response
+    sendOrderConfirmationEmail(order).catch(err => {
+      console.warn('Email failed but order created:', err.message);
+    });
 
     res.status(201).json({
       message: 'Order created successfully',
       orderId: order._id,
       order,
-      emailSent: emailResult?.success || false
+      emailSent: true
     });
   } catch (error) {
     res.status(500).json({ message: error.message });
