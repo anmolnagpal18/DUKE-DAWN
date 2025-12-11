@@ -53,12 +53,16 @@ exports.createRazorpayOrder = async (req, res) => {
       await Cart.updateOne({ user: req.userId }, { items: [] });
 
       // Send order confirmation email
-      await sendOrderConfirmationEmail(order);
+      const emailResult = await sendOrderConfirmationEmail(order);
+      if (!emailResult.success) {
+        console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
+      }
 
       return res.json({ 
         message: 'Demo order created (Razorpay not configured)', 
         orderId: order._id,
-        isDemoOrder: true 
+        isDemoOrder: true,
+        emailSent: emailResult?.success || false
       });
     }
 
@@ -134,9 +138,16 @@ exports.verifyPayment = async (req, res) => {
     await Cart.updateOne({ user: req.userId }, { items: [] });
 
     // Send order confirmation email
-    await sendOrderConfirmationEmail(order);
+    const emailResult = await sendOrderConfirmationEmail(order);
+    if (!emailResult.success) {
+      console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
+    }
 
-    res.json({ message: 'Payment verified successfully', orderId: order._id });
+    res.json({ 
+      message: 'Payment verified successfully', 
+      orderId: order._id,
+      emailSent: emailResult?.success || false
+    });
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
@@ -184,12 +195,16 @@ exports.createOrder = async (req, res) => {
     await Cart.updateOne({ user: req.userId }, { items: [] });
 
     // Send order confirmation email
-    await sendOrderConfirmationEmail(order);
+    const emailResult = await sendOrderConfirmationEmail(order);
+    if (!emailResult.success) {
+      console.warn('⚠️ Email sending failed but order was created:', emailResult.error);
+    }
 
     res.status(201).json({
       message: 'Order created successfully',
       orderId: order._id,
       order,
+      emailSent: emailResult?.success || false
     });
   } catch (error) {
     res.status(500).json({ message: error.message });

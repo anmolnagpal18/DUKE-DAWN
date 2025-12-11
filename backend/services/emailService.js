@@ -4,6 +4,7 @@ const nodemailer = require('nodemailer');
 let transporter;
 if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
   transporter = nodemailer.createTransport({
+    service: 'gmail',
     host: 'smtp.gmail.com',
     port: 587,
     secure: false,
@@ -13,17 +14,39 @@ if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
     },
     tls: {
       rejectUnauthorized: false
+    },
+    pool: true,
+    maxConnections: 5,
+    maxMessages: 10,
+    rateLimit: 5
+  });
+  
+  // Test connection on startup
+  transporter.verify((error, success) => {
+    if (error) {
+      console.error('Email configuration error:', error.message);
+      console.log('Please check your Gmail app password and ensure 2FA is enabled');
+    } else {
+      console.log('✅ Email server is ready to send messages');
     }
   });
+} else {
+  console.warn('⚠️ Email credentials not configured. Emails will not be sent.');
 }
 
 const sendOrderConfirmationEmail = async (order) => {
   if (!transporter) {
-    console.log('Email not configured, skipping order confirmation email');
-    return;
+    console.log('⚠️ Email not configured, skipping order confirmation email');
+    return { success: false, error: 'Email not configured' };
+  }
+
+  if (!order.shippingInfo || !order.shippingInfo.email) {
+    console.error('❌ No email address found in order');
+    return { success: false, error: 'No email address' };
   }
 
   try {
+    console.log('📧 Sending order confirmation email to:', order.shippingInfo.email);
     const itemsHtml = order.items.map(item => `
       <tr style="border-bottom: 1px solid #eee;">
         <td style="padding: 10px; text-align: left;">${item.name}</td>
@@ -120,19 +143,26 @@ const sendOrderConfirmationEmail = async (order) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Order confirmation email sent successfully:', result.messageId);
+    return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error('Failed to send order confirmation email:', error);
+    console.error('❌ Failed to send order confirmation email:', error.message);
+    if (error.code === 'EAUTH') {
+      console.error('Authentication failed. Please check your Gmail app password.');
+    }
+    return { success: false, error: error.message };
   }
 };
 
 const sendPasswordResetEmail = async (email, resetCode) => {
   if (!transporter) {
-    console.log('Email not configured, skipping password reset email');
-    return;
+    console.log('⚠️ Email not configured, skipping password reset email');
+    return { success: false, error: 'Email not configured' };
   }
 
   try {
+    console.log('📧 Sending password reset email to:', email);
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -171,9 +201,15 @@ const sendPasswordResetEmail = async (email, resetCode) => {
       `,
     };
 
-    await transporter.sendMail(mailOptions);
+    const result = await transporter.sendMail(mailOptions);
+    console.log('✅ Password reset email sent successfully:', result.messageId);
+    return { success: true, messageId: result.messageId };
   } catch (error) {
-    console.error('Failed to send password reset email:', error);
+    console.error('❌ Failed to send password reset email:', error.message);
+    if (error.code === 'EAUTH') {
+      console.error('Authentication failed. Please check your Gmail app password.');
+    }
+    return { success: false, error: error.message };
   }
 };
 

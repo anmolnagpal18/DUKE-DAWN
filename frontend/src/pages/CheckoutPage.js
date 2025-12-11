@@ -76,6 +76,11 @@ const CheckoutPage = ({ onOrderComplete }) => {
       paymentMethod: 'cod',
     });
 
+    // Show email status if available
+    if (response.data.emailSent === false) {
+      console.warn('Order created but email notification failed');
+    }
+
     if (onOrderComplete) {
       onOrderComplete();
     }
@@ -91,7 +96,8 @@ const CheckoutPage = ({ onOrderComplete }) => {
       
       // Check if this is a demo order (Razorpay not configured)
       if (response.data.isDemoOrder) {
-        alert('Demo Mode: Order created successfully! (Razorpay not configured)');
+        const emailStatus = response.data.emailSent ? 'Email sent successfully!' : 'Email notification failed.';
+        alert(`Demo Mode: Order created successfully! (Razorpay not configured)\n${emailStatus}`);
         
         if (onOrderComplete) {
           onOrderComplete();
@@ -117,6 +123,11 @@ const CheckoutPage = ({ onOrderComplete }) => {
               razorpay_signature: paymentResponse.razorpay_signature,
               shippingInfo: formData,
             });
+
+            // Show email status if available
+            if (verifyResponse.data.emailSent === false) {
+              console.warn('Payment verified but email notification failed');
+            }
 
             if (onOrderComplete) {
               onOrderComplete();

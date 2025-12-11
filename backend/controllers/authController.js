@@ -113,9 +113,21 @@ exports.forgotPassword = async (req, res) => {
     await user.save();
 
     // Send reset code via email
-    await sendPasswordResetEmail(user.email, resetCode);
-
-    res.json({ message: 'Password reset code sent to your email' });
+    const emailResult = await sendPasswordResetEmail(user.email, resetCode);
+    
+    if (emailResult.success) {
+      res.json({ 
+        message: 'Password reset code sent to your email',
+        emailSent: true
+      });
+    } else {
+      console.error('Failed to send password reset email:', emailResult.error);
+      res.json({ 
+        message: 'Reset code generated but email delivery failed. Please contact support.',
+        emailSent: false,
+        error: emailResult.error
+      });
+    }
   } catch (error) {
     res.status(500).json({ message: error.message });
   }
