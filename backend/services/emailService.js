@@ -14,25 +14,10 @@ const transporter = nodemailer.createTransport({
   socketTimeout: 60000,
   pool: false
 });
-  
-  // Test connection on startup
-  transporter.verify((error, success) => {
-    if (error) {
-      console.error('Email configuration error:', error.message);
-      console.log('Please check your Gmail app password and ensure 2FA is enabled');
-    } else {
-      console.log('✅ Email server is ready to send messages');
-    }
-  });
-} else {
-  console.warn('⚠️ Email credentials not configured. Emails will not be sent.');
-}
+
+console.log('📧 Email service initialized');
 
 const sendOrderConfirmationEmail = async (order) => {
-  if (!transporter) {
-    console.log('⚠️ Email not configured, skipping order confirmation email');
-    return { success: false, error: 'Email not configured' };
-  }
 
   if (!order.shippingInfo || !order.shippingInfo.email) {
     console.error('❌ No email address found in order');
@@ -150,10 +135,6 @@ const sendOrderConfirmationEmail = async (order) => {
 };
 
 const sendPasswordResetEmail = async (email, resetCode) => {
-  if (!transporter) {
-    console.log('⚠️ Email not configured, skipping password reset email');
-    return { success: false, error: 'Email not configured' };
-  }
 
   try {
     console.log('📧 Sending password reset email to:', email);
