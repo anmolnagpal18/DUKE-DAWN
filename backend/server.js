@@ -16,6 +16,8 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
+console.log('🌐 CORS configured for:', 'https://duke-dawn.vercel.app');
+
 // Handle preflight requests
 app.options('*', cors());
 
