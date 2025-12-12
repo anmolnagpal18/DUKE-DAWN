@@ -47,6 +47,12 @@ app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running' });
 });
 
+// Test route
+app.post('/api/test', (req, res) => {
+  console.log('📝 Test endpoint hit:', req.body);
+  res.json({ message: 'Test successful', received: req.body });
+});
+
 // Global error handler
 app.use((err, req, res, next) => {
   console.error('Global error:', err);

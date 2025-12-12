@@ -2,21 +2,17 @@ const Newsletter = require('../models/Newsletter');
 const nodemailer = require('nodemailer');
 
 // Email transporter setup
-let transporter;
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    }
-  });
-}
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
+    pass: process.env.EMAIL_PASS || 'yjynneuxlsftnkov',
+  },
+  pool: true,
+  maxConnections: 1,
+  rateDelta: 20000,
+  rateLimit: 5
+});
 
 exports.subscribe = async (req, res) => {
   try {
@@ -63,17 +59,10 @@ exports.sendNewsletter = async (req, res) => {
   try {
     const { subject, message } = req.body;
     
-    if (!transporter) {
-      return res.status(500).json({ message: 'Email configuration not set up' });
-    }
-
-    // Test email connection
-    try {
-      await transporter.verify();
-    } catch (emailError) {
-      console.error('Email connection failed:', emailError);
-      return res.status(500).json({ message: `Email authentication failed: ${emailError.message}` });
-    }
+    console.log('Email config:', {
+      user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
+      pass: process.env.EMAIL_PASS ? '***' : 'yjynneuxlsftnkov'
+    });
 
     const subscriptions = await Newsletter.find({ isActive: true });
     
