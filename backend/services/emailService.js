@@ -1,25 +1,19 @@
 const nodemailer = require('nodemailer');
 
-// Email transporter setup
-let transporter;
-if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-  transporter = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      rejectUnauthorized: false
-    },
-    pool: true,
-    maxConnections: 5,
-    maxMessages: 10,
-    rateLimit: 5
-  });
+// Email transporter setup with better timeout settings
+const transporter = nodemailer.createTransport({
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
+  auth: {
+    user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
+    pass: process.env.EMAIL_PASS || 'yjynneuxlsftnkov',
+  },
+  connectionTimeout: 60000,
+  greetingTimeout: 30000,
+  socketTimeout: 60000,
+  pool: false
+});
   
   // Test connection on startup
   transporter.verify((error, success) => {

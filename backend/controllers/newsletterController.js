@@ -1,17 +1,21 @@
 const Newsletter = require('../models/Newsletter');
 const nodemailer = require('nodemailer');
 
-// Email transporter setup
+// Email transporter setup with better timeout settings
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: 'smtp.gmail.com',
+  port: 465,
+  secure: true,
   auth: {
     user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
     pass: process.env.EMAIL_PASS || 'yjynneuxlsftnkov',
   },
-  pool: true,
-  maxConnections: 1,
-  rateDelta: 20000,
-  rateLimit: 5
+  connectionTimeout: 60000,
+  greetingTimeout: 30000,
+  socketTimeout: 60000,
+  pool: false,
+  debug: false,
+  logger: false
 });
 
 exports.subscribe = async (req, res) => {
