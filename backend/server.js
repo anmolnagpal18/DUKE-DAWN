@@ -5,20 +5,32 @@ require('dotenv').config();
 
 const app = express();
 
-// Middleware
-app.use(cors());
+// CORS Configuration for Production
+app.use(cors({
+  origin: [
+    'https://duke-dawn.vercel.app',
+    'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+
+// Handle preflight requests
+app.options('*', cors());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// MongoDB Connection
+// MongoDB Connection with error handling
 const mongoUri = process.env.MONGODB_URI || 'mongodb://localhost:27017/hoodie-store';
 mongoose
-  .connect(mongoUri, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
+  .connect(mongoUri)
   .then(() => console.log('MongoDB connected'))
-  .catch((err) => console.log('MongoDB connection error:', err));
+  .catch((err) => {
+    console.log('MongoDB connection error:', err);
+    process.exit(1);
+  });
 
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
@@ -33,6 +45,12 @@ app.use('/api/newsletter', require('./routes/newsletterRoutes'));
 // Basic route
 app.get('/api/health', (req, res) => {
   res.json({ message: 'Server is running' });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error:', err);
+  res.status(500).json({ error: 'Internal server error' });
 });
 
 const PORT = process.env.PORT || 5000;
