@@ -57,6 +57,9 @@ exports.deleteSubscription = async (req, res) => {
 };
 
 exports.sendNewsletter = async (req, res) => {
+  console.log('📧 Newsletter send request received');
+  console.log('Request body:', req.body);
+  
   try {
     const { subject, message } = req.body;
     
@@ -122,7 +125,11 @@ exports.sendNewsletter = async (req, res) => {
       message: `Newsletter is being sent to ${subscriptions.length} subscribers` 
     });
   } catch (error) {
-    console.error('Newsletter send error:', error);
-    res.status(500).json({ message: error.message });
+    console.error('❌ Newsletter send error:', error);
+    console.error('Error stack:', error.stack);
+    res.status(500).json({ 
+      message: error.message,
+      error: 'Newsletter processing failed'
+    });
   }
 };
