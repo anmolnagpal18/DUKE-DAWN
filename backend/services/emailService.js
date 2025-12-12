@@ -1,19 +1,26 @@
 const nodemailer = require('nodemailer');
 
-// Email transporter setup with better timeout settings
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true,
-  auth: {
-    user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
-    pass: process.env.EMAIL_PASS || 'yjynneuxlsftnkov',
-  },
-  connectionTimeout: 60000,
-  greetingTimeout: 30000,
-  socketTimeout: 60000,
-  pool: false
-});
+// Email transporter with fallback for hosting providers
+let transporter;
+try {
+  transporter = nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
+    auth: {
+      user: process.env.EMAIL_USER || 'dukeanddawn18@gmail.com',
+      pass: process.env.EMAIL_PASS || 'yjynneuxlsftnkov',
+    },
+    tls: {
+      rejectUnauthorized: false
+    },
+    connectionTimeout: 10000,
+    greetingTimeout: 5000,
+    socketTimeout: 10000
+  });
+} catch (error) {
+  console.error('Email transporter setup failed:', error);
+}
 
 console.log('📧 Email service initialized');
 
@@ -122,7 +129,12 @@ const sendOrderConfirmationEmail = async (order) => {
       `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email timeout after 15 seconds')), 15000)
+      )
+    ]);
     console.log('✅ Order confirmation email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
@@ -176,7 +188,12 @@ const sendPasswordResetEmail = async (email, resetCode) => {
       `,
     };
 
-    const result = await transporter.sendMail(mailOptions);
+    const result = await Promise.race([
+      transporter.sendMail(mailOptions),
+      new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Email timeout after 15 seconds')), 15000)
+      )
+    ]);
     console.log('✅ Password reset email sent successfully:', result.messageId);
     return { success: true, messageId: result.messageId };
   } catch (error) {
